@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AddTask from "../components/AddTask";
-import Edittask from "../components/Edittask";
+
 
 function Home() {
   const localStorageKey = "tasks";
@@ -24,7 +24,7 @@ function Home() {
       id: Date.now(),
       text,
     };
-    setTasks((prev) => [...prev, newTask]);
+    setTasks((prev) => [newTask, ...prev]);
   };
 
   const [editingId, setEditingId] = useState(null);
@@ -47,6 +47,23 @@ function Home() {
     cancelEdit();
   };
 
+  const toggleComplete = (id) => {
+    setTasks((prev) => {
+      const updated = prev.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      );
+
+      const incomplettask = updated.filter((t) => !t.completed);
+      const complettask = updated.filter((t) => t.completed);
+
+      return [...incomplettask, ...complettask];
+    });
+  };
+
+  const handleDelete = (id) => {
+    setTasks((prev) => prev.filter(t => t.id !== id))
+  }
+
   return (
     <div>
       <AddTask onAddTask={handleAddTask} />
@@ -57,13 +74,10 @@ function Home() {
               <input
                 type="checkbox"
                 checked={task.completed}
-                onChange={() =>
-                  setTasks((prev) =>
-                    prev.map((t) =>
-                      t.id === task.id ? { ...t, completed: !t.completed } : t
-                    )
-                  )
-                }
+                onChange={() => {
+                  console.log("CHECKBOX CLICKED for id:", task.id);
+                  toggleComplete(task.id);
+                }}
               ></input>
               {editingId === task.id ? (
                 <div
@@ -92,6 +106,7 @@ function Home() {
                     {task.text}
                   </span>
                   <button onClick={() => startEdit(task)}>Edit</button>
+                  <button onClick={() => handleDelete(task.id)}>Delete</button>
                 </>
               )}
             </li>
