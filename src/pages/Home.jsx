@@ -22,12 +22,13 @@ function Home() {
     const newTask = {
       id: Date.now(),
       text,
+      completed: false,
     };
     setTasks((prev) => [newTask, ...prev]);
   };
 
   const [editingId, setEditingId] = useState(null);
-  const [editingText, setEditingText] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   const startEdit = (task) => {
     setEditingId(task.id);
@@ -75,25 +76,41 @@ function Home() {
     <div>
       <AddTask onAddTask={handleAddTask} />
       <div className="filter-cols colorBtn">
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("active")}>Active</button>
-        <button onClick={() => setFilter("completed")}>completed</button>
+        <button
+          className={filter === "all" ? "active-filter" : ""}
+          onClick={() => setFilter("all")}
+        >
+          All
+        </button>
+        <button
+          className={filter === "active" ? "active-filter" : ""}
+          onClick={() => setFilter("active")}
+        >
+          Active
+        </button>
+        <button
+          className={filter === "completed" ? "active-filter" : ""}
+          onClick={() => setFilter("completed")}
+        >
+          completed
+        </button>
       </div>
       <div className="todo-grid">
         {visibleTasks.length === 0 ? (
           <p>No tasks</p>
         ) : (
-          <ul className="text-col">
+          <ul>
             {visibleTasks.map((task) => (
               <li key={task.id} className="task-row">
-                <input
-                  type="checkbox"
-                  className="checkbox-col"
-                  checked={task.completed}
-                  onChange={() => {
-                    toggleComplete(task.id);
-                  }}
-                ></input>
+                <div className="checkbox-col">
+                  <input
+                    type="checkbox"
+                    checked={!!task.completed}
+                    onChange={() => toggleComplete(task.id)}
+                    aria-label={`Toggle ${task.text}`}
+                  />
+                </div>
+
                 {editingId === task.id ? (
                   <div
                     style={{
@@ -111,15 +128,19 @@ function Home() {
                         if (e.key === "Enter") saveEdit();
                         if (e.key === "Escape") cancelEdit();
                       }}
+                      style={{ flex: 1 }}
                     />
                     <button onClick={saveEdit}>save</button>
                     <button onClick={cancelEdit}>cancel</button>
                   </div>
                 ) : (
                   <>
-                    <span className={task.completed ? "completed" : ""}>
-                      {task.text}
-                    </span>
+                    <div className="text-col">
+                      <span className={task.completed ? "completed" : ""}>
+                        {task.text}
+                      </span>
+                    </div>
+
                     <div className="actions-col">
                       <button onClick={() => startEdit(task)}>Edit</button>
                       <button onClick={() => handleDelete(task.id)}>
