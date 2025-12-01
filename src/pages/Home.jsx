@@ -1,71 +1,40 @@
-import { useEffect, useState } from "react";
+import { useContext, useState } from "react";
+import { TaskContext } from "../context/TaskContext";
 import AddTask from "../components/AddTask";
 
 function Home() {
-  const localStorageKey = "tasks";
-  const [tasks, setTasks] = useState(() => {
-    const raw = window.localStorage.getItem(localStorageKey);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  });
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(localStorageKey, JSON.stringify(tasks));
-    } catch (err) {
-      console.log("failed to save tasks", err);
-    }
-  }, [tasks]);
-
-  const handleAddTask = (text) => {
-    const newTask = {
-      id: Date.now(),
-      text,
-      completed: false,
-    };
-    setTasks((prev) => [newTask, ...prev]);
-  };
+  //gets tasks and task actions from taskContext
+  const { tasks, addTask, editTask, deleteTask, toggleComplete } =
+    useContext(TaskContext);
 
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [filter, setFilter] = useState("all");
 
+  //call addtask in context
+  const handleAddTask = (text) => addTask(text);
+
+  //sets the editingId for the task with the taskId and sets the editing text
   const startEdit = (task) => {
     setEditingId(task.id);
     setEditingText(task.text);
   };
 
+  //clears the edit state
   const cancelEdit = () => {
     setEditingId(null);
     setEditingText("");
   };
-
+  
+  //calls the edittask from the context
   const saveEdit = () => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === editingId ? { ...t, text: editingText } : t))
-    );
+    if (!editingText.trim()) return;
+    editTask(editingId, editingText);
     cancelEdit();
   };
 
-  const toggleComplete = (id) => {
-    setTasks((prev) => {
-      const updated = prev.map((t) =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      );
-
-      const incomplettask = updated.filter((t) => !t.completed);
-      const complettask = updated.filter((t) => t.completed);
-
-      return [...incomplettask, ...complettask];
-    });
-  };
-
-  const handleDelete = (id) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  const [filter, setFilter] = useState("all");
-
+  //filters the tasks based on the filter to be displayed for the particular filter
   const visibleTasks = tasks.filter((t) => {
     if (filter === "active") return !t.completed;
     if (filter === "completed") return t.completed;
@@ -73,8 +42,8 @@ function Home() {
   });
 
   return (
-    <div>
-      <AddTask onAddTask={handleAddTask} />
+    <div className="app-container">
+      <AddTask addTask={handleAddTask} />
       <div className="filter-cols colorBtn">
         <button
           className={filter === "all" ? "active-filter" : ""}
@@ -92,7 +61,7 @@ function Home() {
           className={filter === "completed" ? "active-filter" : ""}
           onClick={() => setFilter("completed")}
         >
-          completed
+          Completed
         </button>
       </div>
       <div className="todo-grid">
@@ -143,7 +112,7 @@ function Home() {
 
                     <div className="actions-col">
                       <button onClick={() => startEdit(task)}>Edit</button>
-                      <button onClick={() => handleDelete(task.id)}>
+                      <button onClick={() => deleteTask(task.id)}>
                         Delete
                       </button>
                     </div>
